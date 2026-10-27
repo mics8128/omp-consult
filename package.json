@@ -1,6 +1,6 @@
 {
   "name": "omp-consult",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Native, visible model-role consultations for oh-my-pi, with full tools by default and explicit read-only mode.",
   "type": "module",
   "license": "MIT",

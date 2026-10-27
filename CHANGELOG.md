@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.2 — 2026-10-27
+
+- Shorten the tool description while preserving proactive design consultation, context requirements, native execution, and explicit read-only semantics.
+
 ## 1.0.1 — 2026-10-27
 
 - Direct the main agent to consult proactively for design and architecture planning before choosing an approach, without waiting for an explicit request.

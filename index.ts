@@ -21,7 +21,7 @@ export default function consultExtension(pi: ExtensionAPI) {
     name: "consult",
     label: "Consult",
     loadMode: "essential",
-    description: "Use proactively for design and architecture planning, advice, reviews, or a second opinion. For design tasks, call Consult before settling on the approach; do not wait for the user to explicitly request a consultation. Also use it to review code and proposals or get an independent perspective on an existing judgment. Consult the model selected for Consult in /model. Runs natively with visible progress and a saved transcript. Default: normal full tool access. Set readonly=true explicitly to allow only reading/search tools. Supply the task and all necessary context; the consultant does not inherit the current conversation. Use this instead of creating consultant wrappers or invoking omp through a CLI.",
+    description: "Call proactively before settling on a design or architecture, and for advice, reviews, or second opinions. Uses the Consult model configured in /model, with live progress and a saved transcript. Provide all relevant context; the consultant does not inherit this conversation. Full tools by default; set readonly=true only when explicitly requested. Use this native tool, not CLI wrappers or relay agents.",
     parameters: Type.Object({
       task: Type.String({ description: "Question or assignment, including requirements and relevant context." }),
       readonly: Type.Optional(Type.Boolean({ description: "Explicitly restrict to reading/search tools. Default false: normal full tool access." })),
