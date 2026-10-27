@@ -26,13 +26,17 @@ The plugin does not bundle credentials, choose a provider for you, or replace yo
 
 ## Usage
 
-Ask your main agent to use `consult`, or call it through the usual tool interface:
+Use Consult proactively for design and architecture planning, advice, reviews, or a second opinion. For design tasks, the main agent should call Consult **before settling on the approach**, without waiting for an explicit request. Also use it to review code and proposals or get an independent perspective on an existing judgment.
+
+This is guidance to the main agent, not deterministic automatic routing: the plugin does not detect or dispatch design tasks.
+
+You can also explicitly ask your main agent to use `consult`, or call it through the usual tool interface:
 
 ```json
 {"task":"Review the proposed cache design. Read src/cache.ts and report correctness risks."}
 ```
 
-Default: **normal full tool access**, including read, write, edit, execution, and normally enabled extensions/MCP capabilities. It is not an advice-only or read/write-only sandbox. Existing omp settings and approval policies still apply.
+Default: **normal full tool access**, including read, write, edit, execution, and normally enabled extensions/MCP capabilities. It is not an advice-only or read/write-only sandbox. Design and review tasks do not automatically enable read-only mode; use `readonly: true` only when explicitly requested. Existing omp settings and approval policies still apply.
 
 Explicit read-only mode:
 
@@ -46,6 +50,7 @@ The consultant gets the supplied task, project context, and tool access, **not t
 
 Natural-language examples:
 
+- “Design this module's interfaces.” → the main agent consults before choosing the approach.
 - “Use Consult to implement this change.”
 - “Use Consult in read-only mode to review this design.”
 - “Ask Consult for three alternative structures; include the constraints above.”
