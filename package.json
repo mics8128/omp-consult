@@ -1,0 +1,13 @@
+{
+  "name": "omp-consult",
+  "version": "1.0.0",
+  "description": "Native, visible model-role consultations for oh-my-pi, with full tools by default and explicit read-only mode.",
+  "type": "module",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/mics8128/omp-consult.git" },
+  "homepage": "https://github.com/mics8128/omp-consult#readme",
+  "keywords": ["omp", "oh-my-pi", "plugin", "consult", "subagent"],
+  "files": ["index.ts", "README.md", "LICENSE"],
+  "omp": { "extensions": ["./index.ts"] },
+  "peerDependencies": { "@oh-my-pi/pi-coding-agent": ">=18.12.6 <19" }
+}
