@@ -36,7 +36,7 @@ export default function consultExtension(pi: ExtensionAPI) {
       let progress: AgentProgress | undefined;
       const update = () => {
         const lines = [
-          `${id} · ${readonly ? "read-only" : "full tools"} · ${progress?.resolvedModel ?? settings.getModelRole("consult")}`,
+          `${progress?.description ?? "Consult"} · ${readonly ? "read-only" : "full tools"} · ${progress?.resolvedModel ?? settings.getModelRole("consult")}`,
           progress?.currentTool ? `${progress.currentTool} ${progress.currentToolArgs ?? ""}` : progress?.status ?? "starting",
           ...(progress?.recentOutput.slice().reverse() ?? []),
         ];
@@ -59,7 +59,7 @@ export default function consultExtension(pi: ExtensionAPI) {
           ...(readonly ? { tools: READ_TOOLS } : { spawns: "*" as const }),
         },
         task,
-        description: "Consult",
+        assignment: task,
         modelRole: "consult",
         settings,
         modelRegistry: ctx.modelRegistry,
@@ -80,7 +80,7 @@ export default function consultExtension(pi: ExtensionAPI) {
       });
       const transcript = artifactsDir ? `${artifactsDir}/${id}.jsonl` : undefined;
       const text = [
-        `${id} · ${result.resolvedModel ?? settings.getModelRole("consult")} · ${readonly ? "read-only" : "full tools"}`,
+        `${result.description ?? progress?.description ?? "Consult"} · ${result.resolvedModel ?? settings.getModelRole("consult")} · ${readonly ? "read-only" : "full tools"}`,
         result.output,
         result.error || result.stderr,
         transcript ? `Transcript: ${transcript}` : "",

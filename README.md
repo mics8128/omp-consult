@@ -59,6 +59,8 @@ Natural-language examples:
 
 The tool displays the resolved model, access mode, current tool/arguments, and streaming output. It forwards native subagent events to omp's event bus. Persistent parent sessions retain a separate child transcript beside the parent's artifacts, and the final result includes its path. Ephemeral (`--no-session`) parents do not retain a transcript.
 
+Task titles follow omp's native subagent flow: the executor generates a short description from the assignment in the background, using omp's configured title model. Progress and final results display that description when available; until then, or if title generation fails, they display `Consult`. Random IDs remain internal identifiers and transcript filenames, not task titles. No caller-supplied name or separate plugin title-generation request is needed.
+
 Cancellation is passed to the native executor. Provider errors and aborted results are returned with their actual outcome; the plugin does not relaunch a failed consultation or invent a replacement model. Normal omp role resolution and configured provider fallback policies still apply.
 
 ## Implementation
@@ -76,6 +78,7 @@ Live verification on omp 18.12.6/18.13.1:
 - The resolved model and configured thinking level appeared in the result.
 - Native `/model` → Roles rendered the Consult entry.
 - Persistent parent sessions saved a child `.jsonl` transcript and returned its path.
+- Version 1.0.3 on omp 18.13.1: native generated titles appeared in live progress and final results in both full-tool and read-only runs (57 and 53 updates). Exact scratch-file write/read, read-only write denial, and saved child transcripts were confirmed again; `omp render --plain` displayed both generated titles in the terminal transcript.
 
 Smoke runs use real configured models and may incur provider charges. No credentials, user configuration, or private transcripts belong in this repository.
 

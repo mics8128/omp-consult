@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.3 — 2026-10-27
+
+- Use omp's native background subagent title generation instead of a fixed `Consult` description.
+- Display generated task titles in live progress and final results, with `Consult` as the fallback; retain unique internal IDs and transcript filenames.
+
 ## 1.0.2 — 2026-10-27
 
 - Shorten the tool description while preserving proactive design consultation, context requirements, native execution, and explicit read-only semantics.
