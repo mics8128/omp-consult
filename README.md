@@ -1,98 +1,96 @@
 # omp-consult
 
-Native consultant and creative director tools for [oh-my-pi](https://github.com/can1357/oh-my-pi). Pick each model in `/model`, then call `consult` or `creative`. No nested CLI, Python wrappers, or relay agents.
+Native consultant and creative director agents for [oh-my-pi](https://github.com/can1357/oh-my-pi). Select each model in `/model`, then launch `consult` or `creative` through the existing **`task` tool**. Execution, background jobs, completion delivery, waiting, cancellation, and follow-up messages use omp's native task lifecycle. No custom executor, completion channel, nested CLI, or relay agent.
 
 ## Install
 
-Requires omp 18.12.6 or later in the 18.x series. Uses omp's injected SDK; no runtime dependencies or build step.
+Requires omp 18.14.0 or later in the 18.x series. Uses omp's injected SDK; no runtime dependencies or build step.
 
 ```sh
 git clone https://github.com/mics8128/omp-consult.git
 omp plugin link ./omp-consult
 ```
 
-Restart omp or reload extensions. On the first main-session start, the plugin adds missing model assignments: `consult` inherits `@slow`, and `creative` inherits `@vision`. Existing assignments are never overwritten. Open `/model` → **Roles** to select each model and thinking level independently. The entries display as **CONSULT** and **CREATIVE**; their internal IDs remain lowercase. Assignments use omp's existing global/project role storage.
+Restart omp after installing or upgrading so native task discovery rebuilds its agent list. The plugin ships `agents/consult.md` and `agents/creative.md`; omp discovers agents from linked/installed plugin roots. No copying files into personal agent directories or manually merging YAML is required. Existing project/user agents of the same name take precedence under omp's normal discovery rules.
 
-Role prompts, proactive invocation descriptions, default role aliases, and uppercase display names ship in `roles.ts` with the plugin. No separate agent files, prompt installation, or manual YAML merge is required on another machine. Display names are applied at runtime without persisting tag changes; existing tag colors and other metadata are preserved.
+On the first main-session start, the extension adds missing model assignments: `consult` inherits `@slow`, and `creative` inherits `@vision`. Existing assignments are never overwritten. Open `/model` → **Roles** to select each model and thinking level independently. Entries display as **CONSULT** and **CREATIVE**; internal IDs remain lowercase. Display metadata is applied at runtime without persisting tag changes, and existing tag colors/metadata are preserved.
 
-The plugin does not bundle credentials, fix a provider/model, or replace your current main model. The defaults inherit whatever models you assign to `SLOW` and `VISION`; either specialist can be overridden independently in `/model`.
+The plugin does not bundle credentials, fix a provider/model, or replace the main model. Normal task model overrides, provider routing, and fallback policies still apply.
 
 ## Usage
 
-Use **Consult** proactively for design and architecture planning, advice, reviews, or a second opinion. For technical design tasks, the main agent should call Consult **before settling on the approach**, without waiting for an explicit request. Also use it to review code and proposals or get an independent perspective on an existing judgment.
-
-Use **Creative** proactively when work needs creativity: plot and story ideation, character concepts, UI/UX concepts, naming, copywriting, or visual direction. The creative director offers concrete ideas and recommendations without forcing a fixed process or number of options. Implementation remains with the main agent unless explicitly assigned to Creative.
-
-Each tool's description tells the main agent when to call it. This is guidance, not deterministic automatic routing: the plugin does not classify or dispatch tasks.
-
-You can also explicitly ask your main agent to use `consult`, or call it through the usual tool interface:
+Use the ordinary `task` interface and select the specialist with `agent`. With native batch mode enabled:
 
 ```json
-{"task":"Review the proposed cache design. Read src/cache.ts and report correctness risks."}
+{
+  "context": "We are reviewing the cache design. Requirements and decisions are in DESIGN.md.",
+  "tasks": [{
+    "agent": "consult",
+    "task": "Read DESIGN.md and src/cache.ts. Report correctness risks and recommend an approach.",
+    "solutionSpace": "Compare viable cache ownership and cancellation designs; do not modify files."
+  }]
+}
 ```
 
-For creative work, call `creative` with the same parameters:
+For creative work, select `"agent": "creative"` and provide the assignment and constraints in the same fields. Several independent assignments can share one native task batch. Follow the schema advertised by the host; if `task.batch` is disabled, use its flat `agent`, `task`, and `solutionSpace` form instead. The specialist is an agent selector, not a model override.
 
-```json
-{"task":"Read the existing onboarding screens and propose an interface concept that makes the first session feel welcoming without slowing users down."}
+- **Consult:** use proactively before settling on a design or architecture, and for advice, reviews, or second opinions.
+- **Creative:** use proactively for stories, character concepts, UI/UX concepts, naming, copywriting, or visual direction. Implementation remains with the main agent unless explicitly assigned.
+
+These descriptions appear in the native task agent list. They guide the main agent; the plugin does not implement a classifier or deterministic automatic routing. Include relevant requirements, decisions, and file references in the task/context rather than assuming the specialist has the full parent conversation.
+
+## Standard task behavior
+
+Both specialists are ordinary native task agents; neither declares `blocking: true`.
+
+- When native async execution is available and enabled, `task` returns its standard background-agent receipt. Continue independent work; results arrive through the same native completion channel as other task agents.
+- Use the existing `wait` tool when blocked on work you started. Do not poll for progress or launch a duplicate assignment.
+- In print mode, `--wait-async` waits for these jobs and processes their results before exiting, just as for other native task agents.
+- Progress, generated titles, transcripts, job status, cancellation, and session teardown follow omp's task implementation. When async is disabled or the host has no manager, the normal native synchronous fallback applies.
+- The plugin neither registers a second job system nor sends `omp-specialist-result` messages.
+
+Use the exact agent ID returned by task for native communication:
+
+```text
+write {"path":"agent://<id>","content":"Also consider the cancellation boundary."}
+read  {"path":"agent://<id>"}
+read  {"path":"history://<id>"}
 ```
 
-Both tools default to **normal full tool access**, including read, write, edit, execution, and normally enabled extensions/MCP capabilities. They are not advice-only or read/write-only sandboxes. Creative normally gives recommendations because of its role prompt, not an enforced mutation restriction. Design and review tasks do not automatically enable read-only mode; use `readonly: true` only when explicitly requested. Existing omp settings and approval policies still apply.
+Completed agents follow the host's native idle/parked lifecycle and can be messaged for follow-up questions. Use native job/agent controls for cancellation. Closing the owning omp process does not create a durable external worker; normal host persistence and restoration rules apply.
 
-Explicit read-only mode:
+## Access and migration from 1.x
 
-```json
-{"task":"Read src/cache.ts and review it without making changes.","readonly":true}
-```
+**Version 2.0 removes the standalone `consult` and `creative` tools.** Replace direct tool calls with native `task` calls selecting the corresponding agent. Existing `/model` role assignments remain usable. There are no compatibility wrappers or separate completion adapters.
 
-Read-only runs use a native restricted-tool session with only `read`, `grep`, `glob`, `web_search`, and `ast_grep`. Execution, mutations, delegation, discovered extensions, and MCP discovery are not granted to that session. This is host-side tool restriction, not a prompt asking the model to behave. Provider-native capabilities remain controlled by the provider and omp.
+Both agents use normal full task capabilities (`spawns: "*"`), subject to host settings and approvals. Creative's recommendations-only default is role guidance, not a tool sandbox.
 
-Each specialist gets the supplied task, project context, and tool access, **not the parent conversation**. Include relevant requirements, decisions, and file/artifact references in `task`.
-
-Natural-language examples:
-
-- “Design this module's interfaces.” → the main agent consults before choosing the approach.
-- “Use Consult to implement this change.”
-- “Use Consult in read-only mode to review this design.”
-- “Ask Consult for three alternative structures; include the constraints above.”
-- “Help develop this character's motivation and the next plot turn.” → the main agent calls Creative.
-- “Give this interface a distinctive visual direction.” → the main agent calls Creative.
-
-## Visibility and cancellation
-
-The tool displays the resolved model, access mode, current tool/arguments, and streaming output. It forwards native subagent events to omp's event bus. Persistent parent sessions retain a separate child transcript beside the parent's artifacts, and the final result includes its path. Ephemeral (`--no-session`) parents do not retain a transcript.
-
-Task titles follow omp's native subagent flow: the executor generates a short description from the assignment in the background, using omp's configured title model. Progress and final results display that description when available; until then, or if title generation fails, they display `Consult`. Random IDs remain internal identifiers and transcript filenames, not task titles. No caller-supplied name or separate plugin title-generation request is needed.
-
-Cancellation is passed to the native executor. Provider errors and aborted results are returned with their actual outcome; the plugin does not relaunch a failed consultation or invent a replacement model. Normal omp role resolution and configured provider fallback policies still apply.
+**The old per-call `readonly: true` parameter is removed.** Native task does not offer an equivalent switch. A "do not modify files" instruction is not enforced read-only isolation, and merely listing read tools in agent frontmatter does not guarantee that extension/MCP tools are excluded. Do not substitute `tasks[].tools`: that field grants eval-defined custom tools, not a built-in restriction list. If enforced read-only execution is required, use a host-supported restricted mode such as native plan mode and verify its effective capabilities; this plugin no longer supplies a separate restricted executor.
 
 ## Implementation
 
-`index.ts` registers the essential `consult` and `creative` tools from the bundled `roles.ts` definitions, using one shared execution path with the host-injected `pi.pi.runSubprocess` executor. Despite its historical name, this executor is **in-process**. There is no `subprocess`, `child_process`, `Bun.spawn`, or shell launch in the plugin.
-
-The plugin uses supported dynamic role settings rather than patching omp's built-in role list. The public `config/model-settings` handle applies runtime display metadata through omp's extension loader; execution and UI utilities remain host-injected. Each call is a separate native agent; finished agents are disposed while saved transcripts remain available.
+- `agents/consult.md`, `agents/creative.md`: native agent descriptions, role prompts, and `@consult` / `@creative` model selectors.
+- `roles.ts`: model role IDs, default aliases, and uppercase display names.
+- `index.ts`: model-role initialization and display metadata only. It registers no tools and owns no background promises, controllers, progress UI, or completion messages.
 
 ## Verification
 
-Live verification on omp 18.12.6/18.13.1:
+Version 2.0.0 was exercised through the actual omp 18.14.0 CLI with `--wait-async` and real configured models:
 
-- Default mode: consultant used `write` to create a scratch file, then `read` to verify exact content; 45 live progress updates were observed.
-- Explicit read-only mode: a request to create a file could not access `write`; it read the existing proof file instead. The forbidden file remained absent, with 18 live progress updates.
-- The resolved model and configured thinking level appeared in the result.
-- Native `/model` → Roles rendered the Consult entry.
-- Persistent parent sessions saved a child `.jsonl` transcript and returned its path.
-- Version 1.0.3 on omp 18.13.1: native generated titles appeared in live progress and final results in both full-tool and read-only runs (57 and 53 updates). Exact scratch-file write/read, read-only write denial, and saved child transcripts were confirmed again; `omp render --plain` displayed both generated titles in the terminal transcript.
+- The main agent discovered both packaged specialists and launched them together through native `task`, without a model override.
+- Task returned `Spawned 2 background agents using consult, creative`; the parent finished its initial turn before either result.
+- Both children used `read`, returned their requested acceptance markers, and arrived as native `async-result` messages that resumed the parent. Consult reported package version `2.0.0`; Creative produced a Chinese story opening.
 
-Version 1.1.0 verification on omp 18.13.3:
+An additional real-model run through the installed SDK package (which reports version 18.13.3, separately from the 18.14.0 CLI binary) verified:
 
-- Loaded the linked plugin through omp's real extension loader and called `creative` in read-only mode. It resolved the inherited VISION model (`llm-esapp/gemini-3.8-flash-high:high`), read `roles.ts`, and returned a Chinese story premise.
-- Observed the native generated task title in live progress and the final result, plus a saved child transcript.
-- Opened the actual `/model` → Roles terminal UI: `CONSULT` and `CREATIVE` both appeared uppercase, with the existing consultant model retained and Creative resolving to the VISION model.
-- `npm pack --dry-run --json` confirmed that `roles.ts` ships with `index.ts` in the installable package.
-- Creative's full-tool run wrote and read back an exact 18-byte scratch value. Its read-only run reported `write` unavailable and read the same value instead; the forbidden file remained absent. A Consult read-only regression run read the exact value successfully. All three runs returned generated native titles, resolved models, saved transcripts, and successful execution results.
-- A plain Chinese story-ideation request, without naming either tool, caused the main agent to call `creative` and integrate its returned idea. This verifies the proactive guidance in one live scenario, not deterministic routing for every model or prompt.
+- Normal linked-plugin discovery advertised both agent descriptions; disabling discovery in an isolated harness did not include the package agent roots.
+- The two-agent launch returned in 6 ms and registered two native task jobs owned by `Main`.
+- Native `wait` returned the first completed result while reporting the other still running; the second result resumed the idle parent through native delivery.
+- Consult wrote and read back the exact scratch value, and native `history://` read the saved child transcript.
+- A post-completion `write agent://<id>` woke Consult; native `wait` received its follow-up answer.
+- The session's native cancellation control moved a third probe job to `cancelled`.
 
-Smoke runs use real configured models and may incur provider charges. No credentials, user configuration, or private transcripts belong in this repository.
+Smoke runs use real configured models and may incur provider charges. Credentials, private configuration, transcripts, and scratch files do not belong in this repository.
 
 ## License
 
