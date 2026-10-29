@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.0 — 2026-10-30
+
+- Add an essential `creative` tool for proactive story, interface, naming, copy, and visual ideation, sharing Consult's native execution, progress, cancellation, transcripts, and explicit read-only mode.
+- Bundle both role prompts, invocation guidance, display names, and default aliases in `roles.ts` for portable plugin installation.
+- Show `CONSULT` and `CREATIVE` in `/model`; initialize missing assignments to `@slow` and `@vision` respectively without overwriting existing model choices.
+- Apply display metadata at runtime without requiring a manual configuration merge or persisting model-tag changes.
+
 ## 1.0.3 — 2026-10-27
 
 - Use omp's native background subagent title generation instead of a fixed `Consult` description.
